@@ -54,14 +54,12 @@ def compute_validation_loss(args, model, loader, train_criterion,
             imgs, gts = map(lambda x: x.to(args.device), [imgs, gts])
 
             preds,cls_logits,pfim_loss = model(imgs)
-            # preds,cls_logits = model(imgs)
 
             loss_facl = val_criterion(preds, gts)
             loss_cls = cls_criterion(cls_logits, gts)
             loss_heavy = heavy_criterion(preds, gts)
 
             loss = loss_facl + lambda_cls * loss_cls + lambda_pfim * pfim_loss + lambda_heavy * loss_heavy
-            # loss = loss_facl + lambda_cls * loss_cls + + lambda_heavy * loss_heavy
 
             total_loss += loss.item()
             total_batches += 1
@@ -139,7 +137,6 @@ def train_Model(args):
 
 
     model = MODEL(Igme,MoeFusion,classifier, Regressor,args).to(args.device)
-    # model = MODEL(MoeFusion, classifier, Regressor,args).to(args.device)
 
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=0.0)
 
@@ -162,153 +159,97 @@ def train_Model(args):
     train_steps, train_losses = [], []
     val_steps, val_losses = [], []
 
-    # # 开始训练
-    # print('Start training...')
-    # model.train()
-    # while step_cnt < args.n_steps:
-    #
-    #     for  batch in tqdm(iter(train_loader)):
-    #         imgs = batch[:,:args.in_len, :,:,:].permute(0, 2, 1, 3, 4)    #[B, T, C, H, W] ——> [B, C, T, H, W]=(b,12,in_len,64,64)  前两个时刻的12个通道
-    #         gts = batch[:,-args.out_len:,3:4,:,:].permute(0, 2, 1, 3, 4)  #[B, T, C, H, W] ——> [B, C, T, H, W]=(b,1,in_len,64,64)  未来两个时刻的降水通道
-    #
-    #         optimizer.zero_grad()
-    #
-    #         imgs, gts = map(lambda x: x.to(args.device), [imgs, gts])
-    #
-    #         preds,cls_logits,pfim_loss = model(imgs)
-    #         # preds,cls_logits = model(imgs)
-    #
-    #         loss_facl = criterion(preds , gts )
-    #         loss_cls = cls_criterion(cls_logits, gts)
-    #         loss_heavy = heavy_criterion(preds, gts)
-    #
-    #         loss = loss_facl + lambda_cls * loss_cls + lambda_pfim * pfim_loss + lambda_heavy * loss_heavy
-    #         # loss = loss_facl  + lambda_cls * loss_cls + lambda_heavy * loss_heavy
-    #
-    #         loss.backward()
-    #         optimizer.step()
-    #         scheduler.step()
-    #         train_loss += loss.item()
-    #
-    #         step_cnt += 1
-    #
-    #         if step_cnt % args.log_freq == 0:
-    #             avg_train_loss = train_loss / args.log_freq
-    #
-    #             # elapsed_time = time.time() - start_time
-    #             # print(
-    #             #     f'Step #{step_cnt}: total_loss={train_loss / args.log_freq:.8f} '
-    #             #     f'facl={loss_facl.item():.8f} '
-    #             #     f'cls={loss_cls.item():.8f} ',
-    #             #     f'pfim_loss={pfim_loss.item():.8f}',
-    #             #     f'heavy={loss_heavy.item():.8f} ',
-    #             #     f'{elapsed_time:.2f} seconds\n'
-    #             # )
-    #             train_steps.append(step_cnt)
-    #             train_losses.append(avg_train_loss)
-    #             train_loss = 0.
-    #
-    #         # if step_cnt % args.save_freq == 0:
-    #         #     torch.save(model.state_dict(), args.model_save_best)
-    #         #
-    #         # if step_cnt % args.val_freq == 0:
-    #         #     val_loss = compute_validation_loss(
-    #         #         args, model, valid_loader, criterion,
-    #         #         cls_criterion, lambda_cls,
-    #         #         lambda_pfim,
-    #         #         heavy_criterion,lambda_heavy)
-    #         #
-    #         #     val_steps.append(step_cnt)
-    #         #     val_losses.append(val_loss)
-    #         #     print(f'Step #{step_cnt}: val_loss is {val_loss:.8f}\n')
-    #         #     save_loss_curve(train_steps, train_losses, val_steps, val_losses, args.loss_curve_png)
-    #         #
-    #         # if step_cnt == args.n_steps:
-    #         #     elapsed_time = time.time() - start_time
-    #         #     print(f'Final Elapsed Time: {elapsed_time:.2f} seconds\n')
-    #         #     break
-    # save_loss_curve(train_steps, train_losses, val_steps, val_losses, args.loss_curve_png)
-    # torch.save(model.state_dict(), args.model_save_best)
+    # 开始训练
+    print('Start training...')
+    model.train()
+    while step_cnt < args.n_steps:
+    
+        for  batch in tqdm(iter(train_loader)):
+            imgs = batch[:,:args.in_len, :,:,:].permute(0, 2, 1, 3, 4)    #[B, T, C, H, W] ——> [B, C, T, H, W]=(b,12,in_len,64,64)  前两个时刻的12个通道
+            gts = batch[:,-args.out_len:,3:4,:,:].permute(0, 2, 1, 3, 4)  #[B, T, C, H, W] ——> [B, C, T, H, W]=(b,1,in_len,64,64)  未来两个时刻的降水通道
+    
+            optimizer.zero_grad()
+    
+            imgs, gts = map(lambda x: x.to(args.device), [imgs, gts])
+    
+            preds,cls_logits,pfim_loss = model(imgs)
+    
+            loss_facl = criterion(preds , gts )
+            loss_cls = cls_criterion(cls_logits, gts)
+            loss_heavy = heavy_criterion(preds, gts)
+    
+            loss = loss_facl + lambda_cls * loss_cls + lambda_pfim * pfim_loss + lambda_heavy * loss_heavy
+    
+            loss.backward()
+            optimizer.step()
+            scheduler.step()
+            train_loss += loss.item()
+    
+            step_cnt += 1
+    
+            if step_cnt % args.log_freq == 0:
+                avg_train_loss = train_loss / args.log_freq
+    
+                # elapsed_time = time.time() - start_time
+                # print(
+                #     f'Step #{step_cnt}: total_loss={train_loss / args.log_freq:.8f} '
+                #     f'facl={loss_facl.item():.8f} '
+                #     f'cls={loss_cls.item():.8f} ',
+                #     f'pfim_loss={pfim_loss.item():.8f}',
+                #     f'heavy={loss_heavy.item():.8f} ',
+                #     f'{elapsed_time:.2f} seconds\n'
+                # )
+                train_steps.append(step_cnt)
+                train_losses.append(avg_train_loss)
+                train_loss = 0.
+    
+            if step_cnt % args.save_freq == 0:
+                torch.save(model.state_dict(), args.model_save_best)
+            
+            if step_cnt % args.val_freq == 0:
+                val_loss = compute_validation_loss(
+                    args, model, valid_loader, criterion,
+                    cls_criterion, lambda_cls,
+                    lambda_pfim,
+                    heavy_criterion,lambda_heavy)
+            
+                val_steps.append(step_cnt)
+                val_losses.append(val_loss)
+                print(f'Step #{step_cnt}: val_loss is {val_loss:.8f}\n')
+                save_loss_curve(train_steps, train_losses, val_steps, val_losses, args.loss_curve_png)
+            
+            if step_cnt == args.n_steps:
+                elapsed_time = time.time() - start_time
+                print(f'Final Elapsed Time: {elapsed_time:.2f} seconds\n')
+                break
+    save_loss_curve(train_steps, train_losses, val_steps, val_losses, args.loss_curve_png)
+    torch.save(model.state_dict(), args.model_save_best)
 
 
-    # print('Start visualization...')
-    # time_list = ['2021061009']
-    # for label_time in time_list:
-    #     SAMPLE(args, model, label_time=label_time)
-    # torch.cuda.empty_cache()
-    #
-    # print('Start testing...')
-    # evaluation(args, test_loader, model)
+    print('Start visualization...')
+    time_list = ['2021061009']
+    for label_time in time_list:
+        SAMPLE(args, model, label_time=label_time)
+    torch.cuda.empty_cache()
+    
+    print('Start testing...')
+    evaluation(args, test_loader, model)
 
 
-    # print('SHAP...')
-    # from shap_sample import SHAP_SAMPLE
-    # path = f"{args.home}/64_4km/normalization_64_npy/test_new/"
-    # # 遍历所有npy文件
-    # for f in sorted(os.listdir(path)):
-    #     if f.endswith(".npy") and len(f) == 14:
-    #         t = datetime.strptime(f[:10], "%Y%m%d%H")
-    #         # 生成连续4个时间
-    #         times = [t + timedelta(hours=i) for i in range(4)]
-    #         files = [path + x.strftime("%Y%m%d%H.npy") for x in times]
-    #         # 4个都存在 → 输出label_time
-    #         if all(os.path.exists(p) for p in files):
-    #             label_time = times[-1].strftime("%Y%m%d%H")
-    #             SHAP_SAMPLE(
-    #                 args,
-    #                 model,
-    #                 label_time=label_time,
-    #                 rain_threshold=0.1,
-    #                 baseline_split='train',
-    #                 baseline_max_files=48,
-    #                 case_batch_size=16,   #一次处理多少个 64×64 小块
-    #                 subset_batch_size=4   #一次处理多少个 SHAP 通道组合
-    #             )
-    #             torch.cuda.empty_cache()
-
-    from shap_sample import SHAP_SAMPLE
-    SHAP_SAMPLE(
-        args,
-        model,
-        label_time='2021061009',
-        rain_threshold=0.1,
-        baseline_split='train',
-        baseline_max_files=48,
-        case_batch_size=16,  # 一次处理多少个 64×64 小块
-        subset_batch_size=4  # 一次处理多少个 SHAP 通道组合
-    )
-
-    # print("可视化全部测试集_____________________________________________________")
-    # # 你的路径
-    # path = f"{args.home}/64_4km/normalization_64_npy/test_new/"
-    # model.load_state_dict(torch.load(args.model_save_best))
-    # # 遍历所有npy文件
-    # for f in sorted(os.listdir(path)):
-    #     if f.endswith(".npy") and len(f) == 14:
-    #         t = datetime.strptime(f[:10], "%Y%m%d%H")
-    #         # 生成连续4个时间
-    #         times = [t + timedelta(hours=i) for i in range(4)]
-    #         files = [path + x.strftime("%Y%m%d%H.npy") for x in times]
-    #         # 4个都存在 → 输出label_time
-    #         if all(os.path.exists(p) for p in files):
-    #             label_time = times[-1].strftime("%Y%m%d%H")
-    #             SAMPLE_FULL(args, model, label_time)
-    # print("DONE")
+ 
 
 
 
 
 if __name__ == '__main__':
-    # for i in range(1000,2000):
-        i = 13
         args = parse_args()
-        args.seed = i
-        args.model_save_best = f'{args.home}/64_4km/Transunet_Swintransformer/result/A_3_14_{i}.pth'
-        args.loss_curve_png = f'{args.home}/64_4km/Transunet_Swintransformer/result/A_3_14_{i}.png'
+        args.seed = 13
+        args.model_save_best = f'{args.home}/64_4km/Transunet_Swintransformer/result/A_3_14_{seed}.pth'
+        args.loss_curve_png = f'{args.home}/64_4km/Transunet_Swintransformer/result/A_3_14_{seed}.png'
         args.gpu_id = '0'
         args.device_ids = [int(i) for i in args.gpu_id.split(',')]
         args.device = f'cuda:{args.device_ids[0]}'
-        # print(f"正在训练第{i}个模型")
+        print(f"正在训练模型")
         train_Model(args)
 
 
